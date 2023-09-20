@@ -4,12 +4,16 @@ defmodule WebPushElixir do
   @auth_info "Content-Encoding: auth" <> <<0>>
   @one_buffer <<1>>
 
-  def gen_keypair do
+  def gen_key_pair() do
     {public, private} = :crypto.generate_key(:ecdh, :prime256v1)
 
+    {Base.url_encode64(public, padding: false), Base.url_encode64(private, padding: false)}
+  end
+
+  def output_key_pair({public, private}) do
     fn ->
-      Logger.info(%{:public_key => Base.url_encode64(public, padding: false)})
-      Logger.info(%{:private_key => Base.url_encode64(private, padding: false)})
+      Logger.info(%{:public_key => public})
+      Logger.info(%{:private_key => private})
 
       Logger.info(%{:subject => "mailto:admin@email.com"})
     end
@@ -75,5 +79,32 @@ defmodule WebPushElixir do
       )
 
     cipher_text <> cipher_tag
+  end
+
+  def get_headers(audience, content_encoding, expiration \\ 12 * 3600) do
+    expiration_timestamp = DateTime.to_unix(DateTime.utc_now()) + expiration
+
+    public_key = Base.url_decode64!(System.get_env("PUBLIC_KEY"), padding: false)
+    private_key = Base.url_decode64!(System.get_env("PRIVATE_KEY"), padding: false)
+
+    payload =
+      %{
+        aud: audience,
+        exp: expiration_timestamp,
+        sub: System.get_env("SUBJECT")
+      }
+      |> JOSE.JWT.from_map()
+
+    jwk =
+      {:ECPrivateKey, 1, private_key, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}}, public_key, nil}
+      |> JOSE.JWK.from_key()
+
+    {_, jwt} = JOSE.JWS.compact(JOSE.JWT.sign(jwk, %{"alg" => "ES256"}, payload))
+
+    headers(content_encoding, jwt, System.get_env("PUBLIC_KEY"))
+  end
+
+  defp headers("aesgcm", jwt, pub) do
+    %{"Authorization" => "WebPush " <> jwt, "Crypto-Key" => "p256ecdsa=" <> pub}
   end
 end

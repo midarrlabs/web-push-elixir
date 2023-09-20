@@ -16,11 +16,11 @@ defmodule WebPushElixirTest do
   @salt_length 16
   @server_public_key_length 65
 
-  test "it should gen keypair" do
-    assert capture_log(WebPushElixir.gen_keypair()) =~ "public_key:"
-    assert capture_log(WebPushElixir.gen_keypair()) =~ "private_key:"
-    assert capture_log(WebPushElixir.gen_keypair()) =~ "subject:"
-    assert capture_log(WebPushElixir.gen_keypair()) =~ "mailto:admin@email.com"
+  test "it should output key pair" do
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "public_key:"
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "private_key:"
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "subject:"
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "mailto:admin@email.com"
   end
 
   test "it should decode" do
@@ -35,5 +35,25 @@ defmodule WebPushElixirTest do
     assert byte_size(response.salt) == @salt_length
     assert is_binary(response.server_public_key)
     assert byte_size(response.server_public_key) == @server_public_key_length
+  end
+
+  test "it should get headers" do
+    {public, private} = WebPushElixir.gen_key_pair()
+
+    System.put_env("PUBLIC_KEY", public)
+
+    System.put_env("PRIVATE_KEY", private)
+
+    System.put_env("SUBJECT", "mailto:admin@email.com")
+
+    assert %{"Authorization" => "WebPush " <> jwt, "Crypto-Key" => "p256ecdsa=" <> public_key} =
+             WebPushElixir.get_headers("http://localhost/", "aesgcm")
+
+    jwk =
+      {:ECPrivateKey, 1, <<>>, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
+       Base.url_decode64!(public_key, padding: false), nil}
+      |> JOSE.JWK.from_key()
+
+    assert {true, _, _} = JOSE.JWT.verify_strict(jwk, ["ES256"], jwt)
   end
 end
