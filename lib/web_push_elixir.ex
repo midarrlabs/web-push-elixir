@@ -107,4 +107,24 @@ defmodule WebPushElixir do
   defp headers("aesgcm", jwt, pub) do
     %{"Authorization" => "WebPush " <> jwt, "Crypto-Key" => "p256ecdsa=" <> pub}
   end
+
+  def send_web_push(message, %{endpoint: endpoint} = subscription) do
+    payload = encrypt(message, subscription)
+
+    headers =
+      get_headers(make_audience(endpoint), "aesgcm")
+      |> Map.merge(%{
+        "TTL" => "0",
+        "Content-Encoding" => "aesgcm",
+        "Encryption" => "salt=#{Base.url_encode64(payload.salt, padding: false)}",
+        "Crypto-Key" => "dh=#{Base.url_encode64(payload.server_public_key, padding: false)};"
+      })
+
+    HTTPoison.post(endpoint, payload.ciphertext, headers)
+  end
+
+  defp make_audience(endpoint) do
+    parsed = URI.parse(endpoint)
+    parsed.scheme <> "://" <> parsed.host
+  end
 end

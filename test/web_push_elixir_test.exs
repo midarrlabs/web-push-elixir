@@ -3,9 +3,9 @@ defmodule WebPushElixirTest do
 
   import ExUnit.CaptureLog
 
-  @subscription_from_client '{"endpoint":"https://some.pushservice.com/something-unique","keys":{"p256dh":"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=","auth":"FPssNDTKnInHVndSTdbKFw=="}}'
+  @subscription_from_client '{"endpoint":"http://localhost:4040/some-endpoint","keys":{"p256dh":"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=","auth":"FPssNDTKnInHVndSTdbKFw=="}}'
   @subscription_decoded %{
-    endpoint: "https://some.pushservice.com/something-unique",
+    endpoint: "http://localhost:4040/some-endpoint",
     keys: %{
       auth: "FPssNDTKnInHVndSTdbKFw==",
       p256dh:
@@ -20,6 +20,7 @@ defmodule WebPushElixirTest do
     assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "public_key:"
     assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "private_key:"
     assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "subject:"
+
     assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "mailto:admin@email.com"
   end
 
@@ -55,5 +56,27 @@ defmodule WebPushElixirTest do
       |> JOSE.JWK.from_key()
 
     assert {true, _, _} = JOSE.JWT.verify_strict(jwk, ["ES256"], jwt)
+  end
+
+  test "it should send web push" do
+    {public, private} = WebPushElixir.gen_key_pair()
+
+    System.put_env("PUBLIC_KEY", public)
+
+    System.put_env("PRIVATE_KEY", private)
+
+    System.put_env("SUBJECT", "mailto:admin@email.com")
+
+    {:ok, response} = WebPushElixir.send_web_push("some message", @subscription_decoded)
+
+    assert [
+             {"Authorization", "WebPush " <> <<_JWT::binary>>},
+             {"Content-Encoding", "aesgcm"},
+             {"Crypto-Key", <<_server_public_key::binary>>},
+             {"Encryption", "salt=" <> <<_salt::binary>>},
+             {"TTL", "0"}
+           ] = response.request.headers
+
+    assert <<_body::binary>> = response.request.body
   end
 end
