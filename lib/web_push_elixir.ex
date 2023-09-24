@@ -16,11 +16,7 @@ defmodule WebPushElixir do
     end
   end
 
-  defp create_info(type, context) do
-    "Content-Encoding: " <> type <> <<0>> <> "P-256" <> context
-  end
-
-  def encrypt(message, subscription) do
+  defp encrypt(message, subscription) do
     client_public_key = Base.url_decode64!(subscription.keys.p256dh, padding: false)
     client_auth_secret = Base.url_decode64!(subscription.keys.auth, padding: false)
 
@@ -37,15 +33,22 @@ defmodule WebPushElixir do
         client_public_key <>
         <<byte_size(server_public_key)::unsigned-big-integer-size(16)>> <> server_public_key
 
-    content_encryption_key_info = create_info("aesgcm", context)
+    content_encryption_key_info = "Content-Encoding: " <> "aesgcm" <> <<0>> <> "P-256" <> context
     content_encryption_key = hkdf(salt, prk, content_encryption_key_info, 16)
 
-    nonce_info = create_info("nonce", context)
-    nonce = hkdf(salt, prk, nonce_info, 12)
+    nonce = hkdf(salt, prk, "Content-Encoding: " <> "nonce" <> <<0>> <> "P-256" <> context, 12)
 
-    ciphertext = encrypt_payload(message, content_encryption_key, nonce)
+    {cipher_text, cipher_tag} =
+      :crypto.crypto_one_time_aead(
+        :aes_128_gcm,
+        content_encryption_key,
+        nonce,
+        message,
+        "",
+        true
+      )
 
-    %{ciphertext: ciphertext, salt: salt, server_public_key: server_public_key}
+    %{ciphertext: cipher_text <> cipher_tag, salt: salt, server_public_key: server_public_key}
   end
 
   defp hkdf(salt, ikm, info, length) do
@@ -59,20 +62,6 @@ defmodule WebPushElixir do
     |> :crypto.mac_update(<<1>>)
     |> :crypto.mac_final()
     |> :binary.part(0, length)
-  end
-
-  defp encrypt_payload(plaintext, content_encryption_key, nonce) do
-    {cipher_text, cipher_tag} =
-      :crypto.crypto_one_time_aead(
-        :aes_128_gcm,
-        content_encryption_key,
-        nonce,
-        plaintext,
-        "",
-        true
-      )
-
-    cipher_text <> cipher_tag
   end
 
   def get_headers(audience) do
