@@ -13,7 +13,7 @@ defmodule WebPushElixir.MixProject do
         licenses: ["MIT"],
         links: %{"GitHub" => "https://github.com/midarrlabs/web-push-elixir"}
       ],
-
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -29,6 +29,7 @@ defmodule WebPushElixir.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.10", only: :test},
       {:jose, "~> 1.11"},
       {:jason, "~> 1.4"},
       {:plug, "~> 1.14"},
