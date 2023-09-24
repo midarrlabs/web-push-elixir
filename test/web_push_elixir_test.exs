@@ -97,4 +97,10 @@ defmodule WebPushElixirTest do
 
     assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "58"}, {"content-type", "application/manifest+json"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
   end
+
+  test "it should have main js headers" do
+    {:ok, response} = HTTPoison.get('http://localhost:4040/main.js')
+
+    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "784"}, {"content-type", "application/x-javascript"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+  end
 end
