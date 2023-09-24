@@ -85,4 +85,10 @@ defmodule WebPushElixirTest do
 
     assert <<_body::binary>> = response.request.body
   end
+
+  test "it should have index headers" do
+    {:ok, response} = HTTPoison.get('http://localhost:4040')
+
+    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "348"}, {"content-type", "text/html; charset=utf-8"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+  end
 end
