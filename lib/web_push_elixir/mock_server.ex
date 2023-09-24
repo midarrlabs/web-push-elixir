@@ -9,7 +9,7 @@ defmodule WebPushElixir.MockServer do
     |> Plug.Conn.send_resp(200, "ok")
   end
 
-  get "/example" do
+  get "/" do
     conn
     |> put_resp_header("content-type", "text/html; charset=utf-8")
     |> Plug.Conn.send_file(200, "./lib/web_push_elixir/index.html")
