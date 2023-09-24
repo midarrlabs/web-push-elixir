@@ -91,4 +91,10 @@ defmodule WebPushElixirTest do
 
     assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "348"}, {"content-type", "text/html; charset=utf-8"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
   end
+
+  test "it should have mainfest headers" do
+    {:ok, response} = HTTPoison.get('http://localhost:4040/app.webmanifest')
+
+    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "58"}, {"content-type", "application/manifest+json"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+  end
 end
