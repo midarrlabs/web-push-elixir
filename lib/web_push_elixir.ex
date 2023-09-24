@@ -1,9 +1,6 @@
 defmodule WebPushElixir do
   require Logger
 
-  @auth_info "Content-Encoding: auth" <> <<0>>
-  @one_buffer <<1>>
-
   def gen_key_pair() do
     {public, private} = :crypto.generate_key(:ecdh, :prime256v1)
 
@@ -19,6 +16,10 @@ defmodule WebPushElixir do
     end
   end
 
+  defp create_info(type, context) do
+    "Content-Encoding: " <> type <> <<0>> <> "P-256" <> context
+  end
+
   def encrypt(message, subscription) do
     client_public_key = Base.url_decode64!(subscription.keys.p256dh, padding: false)
     client_auth_secret = Base.url_decode64!(subscription.keys.auth, padding: false)
@@ -29,9 +30,12 @@ defmodule WebPushElixir do
 
     shared_secret = :crypto.compute_key(:ecdh, client_public_key, server_private_key, :prime256v1)
 
-    prk = hkdf(client_auth_secret, shared_secret, @auth_info, 32)
+    prk = hkdf(client_auth_secret, shared_secret, "Content-Encoding: auth" <> <<0>>, 32)
 
-    context = create_context(client_public_key, server_public_key)
+    context =
+      <<0, byte_size(client_public_key)::unsigned-big-integer-size(16)>> <>
+        client_public_key <>
+        <<byte_size(server_public_key)::unsigned-big-integer-size(16)>> <> server_public_key
 
     content_encryption_key_info = create_info("aesgcm", context)
     content_encryption_key = hkdf(salt, prk, content_encryption_key_info, 16)
@@ -52,19 +56,9 @@ defmodule WebPushElixir do
 
     :crypto.mac_init(:hmac, :sha256, prk)
     |> :crypto.mac_update(info)
-    |> :crypto.mac_update(@one_buffer)
+    |> :crypto.mac_update(<<1>>)
     |> :crypto.mac_final()
     |> :binary.part(0, length)
-  end
-
-  defp create_context(client_public_key, server_public_key) do
-    <<0, byte_size(client_public_key)::unsigned-big-integer-size(16)>> <>
-      client_public_key <>
-      <<byte_size(server_public_key)::unsigned-big-integer-size(16)>> <> server_public_key
-  end
-
-  defp create_info(type, context) do
-    "Content-Encoding: " <> type <> <<0>> <> "P-256" <> context
   end
 
   defp encrypt_payload(plaintext, content_encryption_key, nonce) do
@@ -81,8 +75,8 @@ defmodule WebPushElixir do
     cipher_text <> cipher_tag
   end
 
-  def get_headers(audience, content_encoding, expiration \\ 12 * 3600) do
-    expiration_timestamp = DateTime.to_unix(DateTime.utc_now()) + expiration
+  def get_headers(audience) do
+    expiration_timestamp = DateTime.to_unix(DateTime.utc_now()) + 12 * 3600
 
     public_key = Base.url_decode64!(System.get_env("PUBLIC_KEY"), padding: false)
     private_key = Base.url_decode64!(System.get_env("PRIVATE_KEY"), padding: false)
@@ -101,18 +95,19 @@ defmodule WebPushElixir do
 
     {_, jwt} = JOSE.JWS.compact(JOSE.JWT.sign(jwk, %{"alg" => "ES256"}, payload))
 
-    headers(content_encoding, jwt, System.get_env("PUBLIC_KEY"))
-  end
-
-  defp headers("aesgcm", jwt, pub) do
-    %{"Authorization" => "WebPush " <> jwt, "Crypto-Key" => "p256ecdsa=" <> pub}
+    %{
+      "Authorization" => "WebPush " <> jwt,
+      "Crypto-Key" => "p256ecdsa=" <> System.get_env("PUBLIC_KEY")
+    }
   end
 
   def send_web_push(message, %{endpoint: endpoint} = subscription) do
     payload = encrypt(message, subscription)
 
+    parsed = URI.parse(endpoint)
+
     headers =
-      get_headers(make_audience(endpoint), "aesgcm")
+      get_headers(parsed.scheme <> "://" <> parsed.host)
       |> Map.merge(%{
         "TTL" => "0",
         "Content-Encoding" => "aesgcm",
@@ -121,10 +116,5 @@ defmodule WebPushElixir do
       })
 
     HTTPoison.post(endpoint, payload.ciphertext, headers)
-  end
-
-  defp make_audience(endpoint) do
-    parsed = URI.parse(endpoint)
-    parsed.scheme <> "://" <> parsed.host
   end
 end

@@ -54,7 +54,7 @@ defmodule WebPushElixirTest do
     System.put_env("SUBJECT", "mailto:admin@email.com")
 
     assert %{"Authorization" => "WebPush " <> jwt, "Crypto-Key" => "p256ecdsa=" <> public_key} =
-             WebPushElixir.get_headers("http://localhost/", "aesgcm")
+             WebPushElixir.get_headers("http://localhost/")
 
     jwk =
       {:ECPrivateKey, 1, <<>>, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
@@ -90,7 +90,7 @@ defmodule WebPushElixirTest do
     {:ok, response} = WebPushElixir.send_web_push("some message", @subscription_decoded)
 
     assert [
-             {"Authorization", "WebPush " <> <<_JWT::binary>>},
+             {"Authorization", "WebPush " <> <<_jwt::binary>>},
              {"Content-Encoding", "aesgcm"},
              {"Crypto-Key", <<_server_public_key::binary>>},
              {"Encryption", "salt=" <> <<_salt::binary>>},
