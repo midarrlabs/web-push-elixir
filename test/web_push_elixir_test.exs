@@ -103,4 +103,10 @@ defmodule WebPushElixirTest do
 
     assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "784"}, {"content-type", "application/x-javascript"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
   end
+
+  test "it should have service worker headers" do
+    {:ok, response} = HTTPoison.get('http://localhost:4040/web-push-elixir/service-worker.js')
+
+    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "208"}, {"content-type", "application/x-javascript"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+  end
 end
