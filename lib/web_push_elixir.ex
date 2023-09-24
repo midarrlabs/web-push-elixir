@@ -16,9 +16,22 @@ defmodule WebPushElixir do
     end
   end
 
-  defp encrypt(message, subscription) do
-    client_public_key = Base.url_decode64!(subscription.keys.p256dh, padding: false)
-    client_auth_secret = Base.url_decode64!(subscription.keys.auth, padding: false)
+  defp hkdf(salt, ikm, info, length) do
+    prk =
+      :crypto.mac_init(:hmac, :sha256, salt)
+      |> :crypto.mac_update(ikm)
+      |> :crypto.mac_final()
+
+    :crypto.mac_init(:hmac, :sha256, prk)
+    |> :crypto.mac_update(info)
+    |> :crypto.mac_update(<<1>>)
+    |> :crypto.mac_final()
+    |> :binary.part(0, length)
+  end
+
+  defp encrypt(message, %{keys: %{auth: auth, p256dh: p256dh}} = _subscription) do
+    client_public_key = Base.url_decode64!(p256dh, padding: false)
+    client_auth_secret = Base.url_decode64!(auth, padding: false)
 
     salt = :crypto.strong_rand_bytes(16)
 
@@ -51,28 +64,15 @@ defmodule WebPushElixir do
     %{ciphertext: cipher_text <> cipher_tag, salt: salt, server_public_key: server_public_key}
   end
 
-  defp hkdf(salt, ikm, info, length) do
-    prk =
-      :crypto.mac_init(:hmac, :sha256, salt)
-      |> :crypto.mac_update(ikm)
-      |> :crypto.mac_final()
-
-    :crypto.mac_init(:hmac, :sha256, prk)
-    |> :crypto.mac_update(info)
-    |> :crypto.mac_update(<<1>>)
-    |> :crypto.mac_final()
-    |> :binary.part(0, length)
-  end
-
-  def get_headers(audience) do
+  def send_web_push(message, %{endpoint: endpoint} = subscription) do
     expiration_timestamp = DateTime.to_unix(DateTime.utc_now()) + 12 * 3600
 
     public_key = Base.url_decode64!(System.get_env("PUBLIC_KEY"), padding: false)
     private_key = Base.url_decode64!(System.get_env("PRIVATE_KEY"), padding: false)
 
-    payload =
+    jwt_payload =
       %{
-        aud: audience,
+        aud: URI.parse(endpoint).scheme <> "://" <> URI.parse(endpoint).host,
         exp: expiration_timestamp,
         sub: System.get_env("SUBJECT")
       }
@@ -82,28 +82,17 @@ defmodule WebPushElixir do
       {:ECPrivateKey, 1, private_key, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}}, public_key, nil}
       |> JOSE.JWK.from_key()
 
-    {_, jwt} = JOSE.JWS.compact(JOSE.JWT.sign(jwk, %{"alg" => "ES256"}, payload))
+    {%{alg: :jose_jws_alg_ecdsa}, jwt} =
+      JOSE.JWS.compact(JOSE.JWT.sign(jwk, %{"alg" => "ES256"}, jwt_payload))
 
-    %{
+    encrypted = encrypt(message, subscription)
+
+    HTTPoison.post(endpoint, encrypted.ciphertext, %{
       "Authorization" => "WebPush " <> jwt,
-      "Crypto-Key" => "p256ecdsa=" <> System.get_env("PUBLIC_KEY")
-    }
-  end
-
-  def send_web_push(message, %{endpoint: endpoint} = subscription) do
-    payload = encrypt(message, subscription)
-
-    parsed = URI.parse(endpoint)
-
-    headers =
-      get_headers(parsed.scheme <> "://" <> parsed.host)
-      |> Map.merge(%{
-        "TTL" => "0",
-        "Content-Encoding" => "aesgcm",
-        "Encryption" => "salt=#{Base.url_encode64(payload.salt, padding: false)}",
-        "Crypto-Key" => "dh=#{Base.url_encode64(payload.server_public_key, padding: false)};"
-      })
-
-    HTTPoison.post(endpoint, payload.ciphertext, headers)
+      "Content-Encoding" => "aesgcm",
+      "Crypto-Key" => "dh=#{Base.url_encode64(encrypted.server_public_key, padding: false)};",
+      "Encryption" => "salt=#{Base.url_encode64(encrypted.salt, padding: false)}",
+      "TTL" => "0"
+    })
   end
 end

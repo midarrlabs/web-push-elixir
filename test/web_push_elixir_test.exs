@@ -31,40 +31,6 @@ defmodule WebPushElixirTest do
     assert Jason.decode!(@subscription_from_client, keys: :atoms) == @subscription_decoded
   end
 
-  test "it should get headers" do
-    {public, private} = WebPushElixir.gen_key_pair()
-
-    System.put_env("PUBLIC_KEY", public)
-
-    System.put_env("PRIVATE_KEY", private)
-
-    System.put_env("SUBJECT", "mailto:admin@email.com")
-
-    assert %{"Authorization" => "WebPush " <> jwt, "Crypto-Key" => "p256ecdsa=" <> public_key} =
-             WebPushElixir.get_headers("http://localhost/")
-
-    jwk =
-      {:ECPrivateKey, 1, <<>>, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
-       Base.url_decode64!(public_key, padding: false), nil}
-      |> JOSE.JWK.from_key()
-
-    assert {
-             true,
-             %JOSE.JWT{
-               fields: %{
-                 "aud" => "http://localhost/",
-                 "exp" => _expiry,
-                 "sub" => "mailto:admin@email.com"
-               }
-             },
-             %JOSE.JWS{
-               alg: {:jose_jws_alg_ecdsa, :ES256},
-               b64: :undefined,
-               fields: %{"typ" => "JWT"}
-             }
-           } = JOSE.JWT.verify_strict(jwk, ["ES256"], jwt)
-  end
-
   test "it should send web push" do
     {public, private} = WebPushElixir.gen_key_pair()
 
@@ -79,7 +45,7 @@ defmodule WebPushElixirTest do
     assert [
              {"Authorization", "WebPush " <> <<_jwt::binary>>},
              {"Content-Encoding", "aesgcm"},
-             {"Crypto-Key", <<_server_public_key::binary>>},
+             {"Crypto-Key", "dh=" <> <<_server_public_key::binary>>},
              {"Encryption", "salt=" <> <<_salt::binary>>},
              {"TTL", "0"}
            ] = response.request.headers
