@@ -61,7 +61,11 @@ defmodule WebPushElixirTest do
        Base.url_decode64!(public_key, padding: false), nil}
       |> JOSE.JWK.from_key()
 
-    assert {true, _, _} = JOSE.JWT.verify_strict(jwk, ["ES256"], jwt)
+    assert {
+             true,
+             %JOSE.JWT{fields: %{"aud" => "http://localhost/", "exp" => _expiry, "sub" => "mailto:admin@email.com"}},
+             %JOSE.JWS{alg: {:jose_jws_alg_ecdsa, :ES256}, b64: :undefined, fields: %{"typ" => "JWT"}}
+           } = JOSE.JWT.verify_strict(jwk, ["ES256"], jwt)
   end
 
   test "it should send web push" do
