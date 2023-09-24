@@ -3,7 +3,7 @@ defmodule WebPushElixirTest do
 
   import ExUnit.CaptureLog
 
-  @subscription_from_client '{"endpoint":"http://localhost:4040/some-endpoint","keys":{"p256dh":"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=","auth":"FPssNDTKnInHVndSTdbKFw=="}}'
+  @subscription_from_client ~c"{\"endpoint\":\"http://localhost:4040/some-endpoint\",\"keys\":{\"p256dh\":\"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=\",\"auth\":\"FPssNDTKnInHVndSTdbKFw==\"}}"
   @subscription_decoded %{
     endpoint: "http://localhost:4040/some-endpoint",
     keys: %{
@@ -17,11 +17,17 @@ defmodule WebPushElixirTest do
   @server_public_key_length 65
 
   test "it should output key pair" do
-    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "public_key:"
-    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "private_key:"
-    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "subject:"
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~
+             "public_key:"
 
-    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~ "mailto:admin@email.com"
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~
+             "private_key:"
+
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~
+             "subject:"
+
+    assert capture_log(WebPushElixir.gen_key_pair() |> WebPushElixir.output_key_pair()) =~
+             "mailto:admin@email.com"
   end
 
   test "it should decode" do
