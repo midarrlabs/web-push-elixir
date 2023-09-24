@@ -27,7 +27,7 @@ defmodule WebPushElixir.MockServer do
     |> Plug.Conn.send_file(200, "./lib/web_push_elixir/main.js")
   end
 
-  get "/service-worker.js" do
+  get "/web-push-elixir/service-worker.js" do
     conn
     |> put_resp_header("content-type", "application/x-javascript")
     |> Plug.Conn.send_file(200, "./lib/web_push_elixir/service-worker.js")
