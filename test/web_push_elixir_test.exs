@@ -63,8 +63,18 @@ defmodule WebPushElixirTest do
 
     assert {
              true,
-             %JOSE.JWT{fields: %{"aud" => "http://localhost/", "exp" => _expiry, "sub" => "mailto:admin@email.com"}},
-             %JOSE.JWS{alg: {:jose_jws_alg_ecdsa, :ES256}, b64: :undefined, fields: %{"typ" => "JWT"}}
+             %JOSE.JWT{
+               fields: %{
+                 "aud" => "http://localhost/",
+                 "exp" => _expiry,
+                 "sub" => "mailto:admin@email.com"
+               }
+             },
+             %JOSE.JWS{
+               alg: {:jose_jws_alg_ecdsa, :ES256},
+               b64: :undefined,
+               fields: %{"typ" => "JWT"}
+             }
            } = JOSE.JWT.verify_strict(jwk, ["ES256"], jwt)
   end
 
@@ -91,32 +101,62 @@ defmodule WebPushElixirTest do
   end
 
   test "it should have index headers" do
-    {:ok, response} = HTTPoison.get('http://localhost:4040')
+    {:ok, response} = HTTPoison.get(~c"http://localhost:4040")
 
-    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "348"}, {"content-type", "text/html; charset=utf-8"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+    assert [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-length", "348"},
+             {"content-type", "text/html; charset=utf-8"},
+             {"date", <<_date::binary>>},
+             {"server", "Cowboy"}
+           ] = response.headers
   end
 
   test "it should have mainfest headers" do
-    {:ok, response} = HTTPoison.get('http://localhost:4040/app.webmanifest')
+    {:ok, response} = HTTPoison.get(~c"http://localhost:4040/app.webmanifest")
 
-    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "58"}, {"content-type", "application/manifest+json"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+    assert [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-length", "58"},
+             {"content-type", "application/manifest+json"},
+             {"date", <<_date::binary>>},
+             {"server", "Cowboy"}
+           ] = response.headers
   end
 
   test "it should have main js headers" do
-    {:ok, response} = HTTPoison.get('http://localhost:4040/main.js')
+    {:ok, response} = HTTPoison.get(~c"http://localhost:4040/main.js")
 
-    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "784"}, {"content-type", "application/x-javascript"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+    assert [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-length", "784"},
+             {"content-type", "application/x-javascript"},
+             {"date", <<_date::binary>>},
+             {"server", "Cowboy"}
+           ] = response.headers
   end
 
   test "it should have service worker headers" do
-    {:ok, response} = HTTPoison.get('http://localhost:4040/web-push-elixir/service-worker.js')
+    {:ok, response} = HTTPoison.get(~c"http://localhost:4040/web-push-elixir/service-worker.js")
 
-    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "208"}, {"content-type", "application/x-javascript"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+    assert [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-length", "208"},
+             {"content-type", "application/x-javascript"},
+             {"date", <<_date::binary>>},
+             {"server", "Cowboy"}
+           ] = response.headers
   end
 
   test "it should have favicon headers" do
-    {:ok, response} = HTTPoison.get('http://localhost:4040/favicon.ico')
+    {:ok, response} = HTTPoison.get(~c"http://localhost:4040/favicon.ico")
 
-    assert [{"cache-control", "max-age=0, private, must-revalidate"}, {"content-length", "1150"}, {"content-type", "image/x-icon"}, {"date", <<_date::binary>>}, {"server", "Cowboy"}] = response.headers
+    assert [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-length", "1150"},
+             {"content-type", "image/x-icon"},
+             {"date", <<_date::binary>>},
+             {"server", "Cowboy"}
+           ] = response.headers
   end
 end
