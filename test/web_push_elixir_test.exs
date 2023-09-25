@@ -3,15 +3,7 @@ defmodule WebPushElixirTest do
 
   import ExUnit.CaptureLog
 
-  @subscription_from_client ~c"{\"endpoint\":\"http://localhost:4040/some-endpoint\",\"keys\":{\"p256dh\":\"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=\",\"auth\":\"FPssNDTKnInHVndSTdbKFw==\"}}"
-  @subscription_decoded %{
-    endpoint: "http://localhost:4040/some-endpoint",
-    keys: %{
-      auth: "FPssNDTKnInHVndSTdbKFw==",
-      p256dh:
-        "BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI="
-    }
-  }
+  @subscription ~c"{\"endpoint\":\"http://localhost:4040/some-endpoint\",\"keys\":{\"p256dh\":\"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=\",\"auth\":\"FPssNDTKnInHVndSTdbKFw==\"}}"
 
   test "it should output key pair" do
     assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
@@ -27,10 +19,6 @@ defmodule WebPushElixirTest do
              "mailto:admin@email.com"
   end
 
-  test "it should decode" do
-    assert Jason.decode!(@subscription_from_client, keys: :atoms) == @subscription_decoded
-  end
-
   test "it should send notification" do
     {public, private} = WebPushElixir.gen_key_pair()
 
@@ -40,7 +28,7 @@ defmodule WebPushElixirTest do
 
     System.put_env("VAPID_SUBJECT", "mailto:admin@email.com")
 
-    {:ok, response} = WebPushElixir.send_notification(@subscription_decoded, "some message")
+    {:ok, response} = WebPushElixir.send_notification(@subscription, "some message")
 
     assert [
              {"Authorization", "WebPush " <> <<_jwt::binary>>},

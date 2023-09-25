@@ -24,7 +24,8 @@ defmodule WebPushElixir do
 
   defp encrypt(
          message,
-         %{keys: %{auth: auth, p256dh: p256dh}},
+         auth,
+         p256dh,
          server_public_key,
          server_private_key
        ) do
@@ -109,12 +110,17 @@ defmodule WebPushElixir do
     signed_json_web_token
   end
 
-  def send_notification(%{endpoint: endpoint} = subscription, message) do
+  def send_notification(subscription, message) do
     server_public_key = url_decode(System.get_env("VAPID_PUBLIC_KEY"))
     server_private_key = url_decode(System.get_env("VAPID_PRIVATE_KEY"))
 
-    encrypted = encrypt(message, subscription, server_public_key, server_private_key)
-    signed_json_web_token = get_signed_json_web_token(endpoint, server_public_key, server_private_key)
+    %{endpoint: endpoint, keys: %{auth: auth, p256dh: p256dh}} =
+      Jason.decode!(subscription, keys: :atoms)
+
+    encrypted = encrypt(message, auth, p256dh, server_public_key, server_private_key)
+
+    signed_json_web_token =
+      get_signed_json_web_token(endpoint, server_public_key, server_private_key)
 
     HTTPoison.post(endpoint, encrypted.ciphertext, %{
       "Authorization" => "WebPush #{signed_json_web_token}",
