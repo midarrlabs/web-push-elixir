@@ -1,10 +1,18 @@
 defmodule WebPushElixir do
   require Logger
 
+  defp url_encode(string) do
+    Base.url_encode64(string, padding: false)
+  end
+
+  defp url_decode(string) do
+    Base.url_decode64!(string, padding: false)
+  end
+
   def gen_key_pair() do
     {public, private} = :crypto.generate_key(:ecdh, :prime256v1)
 
-    {Base.url_encode64(public, padding: false), Base.url_encode64(private, padding: false)}
+    {url_encode(public), url_encode(private)}
   end
 
   def output_key_pair({public, private}) do
@@ -29,13 +37,11 @@ defmodule WebPushElixir do
     |> :binary.part(0, length)
   end
 
-  defp encrypt(message, %{keys: %{auth: auth, p256dh: p256dh}} = _subscription) do
-    client_public_key = Base.url_decode64!(p256dh, padding: false)
-    client_auth_secret = Base.url_decode64!(auth, padding: false)
+  defp encrypt(message, %{keys: %{auth: auth, p256dh: p256dh}} = _subscription, server_public_key, server_private_key) do
+    client_public_key = url_decode(p256dh)
+    client_auth_secret = url_decode(auth)
 
     salt = :crypto.strong_rand_bytes(16)
-
-    {server_public_key, server_private_key} = :crypto.generate_key(:ecdh, :prime256v1)
 
     shared_secret = :crypto.compute_key(:ecdh, client_public_key, server_private_key, :prime256v1)
 
@@ -61,14 +67,14 @@ defmodule WebPushElixir do
         true
       )
 
-    %{ciphertext: cipher_text <> cipher_tag, salt: salt, server_public_key: server_public_key}
+    %{ciphertext: cipher_text <> cipher_tag, salt: salt}
   end
 
   def send_web_push(message, %{endpoint: endpoint} = subscription) do
     expiration_timestamp = DateTime.to_unix(DateTime.utc_now()) + 12 * 3600
 
-    public_key = Base.url_decode64!(System.get_env("PUBLIC_KEY"), padding: false)
-    private_key = Base.url_decode64!(System.get_env("PRIVATE_KEY"), padding: false)
+    public_key = url_decode(System.get_env("PUBLIC_KEY"))
+    private_key = url_decode(System.get_env("PRIVATE_KEY"))
 
     jwt_payload =
       %{
@@ -85,13 +91,13 @@ defmodule WebPushElixir do
     {%{alg: :jose_jws_alg_ecdsa}, jwt} =
       JOSE.JWS.compact(JOSE.JWT.sign(jwk, %{"alg" => "ES256"}, jwt_payload))
 
-    encrypted = encrypt(message, subscription)
+    encrypted = encrypt(message, subscription, public_key, private_key)
 
     HTTPoison.post(endpoint, encrypted.ciphertext, %{
       "Authorization" => "WebPush " <> jwt,
       "Content-Encoding" => "aesgcm",
-      "Crypto-Key" => "dh=#{Base.url_encode64(encrypted.server_public_key, padding: false)};",
-      "Encryption" => "salt=#{Base.url_encode64(encrypted.salt, padding: false)}",
+      "Crypto-Key" => "dh=#{url_encode(public_key)};",
+      "Encryption" => "salt=#{url_encode(encrypted.salt)}",
       "TTL" => "0"
     })
   end
