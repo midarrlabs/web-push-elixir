@@ -31,7 +31,7 @@ defmodule WebPushElixirTest do
     assert Jason.decode!(@subscription_from_client, keys: :atoms) == @subscription_decoded
   end
 
-  test "it should send web push" do
+  test "it should send notification" do
     {public, private} = WebPushElixir.gen_key_pair()
 
     System.put_env("PUBLIC_KEY", public)
@@ -40,7 +40,7 @@ defmodule WebPushElixirTest do
 
     System.put_env("SUBJECT", "mailto:admin@email.com")
 
-    {:ok, response} = WebPushElixir.send_web_push("some message", @subscription_decoded)
+    {:ok, response} = WebPushElixir.send_notification(@subscription_decoded, "some message")
 
     assert [
              {"Authorization", "WebPush " <> <<_jwt::binary>>},
