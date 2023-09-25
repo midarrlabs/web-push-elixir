@@ -26,15 +26,15 @@ defmodule WebPushElixir do
          message,
          auth,
          p256dh,
-         server_public_key,
-         server_private_key
+         vapid_public_key,
+         vapid_private_key
        ) do
     client_public_key = url_decode(p256dh)
     client_auth_secret = url_decode(auth)
 
     salt = :crypto.strong_rand_bytes(16)
 
-    shared_secret = :crypto.compute_key(:ecdh, client_public_key, server_private_key, :prime256v1)
+    shared_secret = :crypto.compute_key(:ecdh, client_public_key, vapid_private_key, :prime256v1)
 
     pseudo_random_key =
       hmac_based_key_derivation_function(
@@ -47,7 +47,7 @@ defmodule WebPushElixir do
     context =
       <<0, byte_size(client_public_key)::unsigned-big-integer-size(16)>> <>
         client_public_key <>
-        <<byte_size(server_public_key)::unsigned-big-integer-size(16)>> <> server_public_key
+        <<byte_size(vapid_public_key)::unsigned-big-integer-size(16)>> <> vapid_public_key
 
     content_encryption_key_info = "Content-Encoding: aesgcm" <> <<0>> <> "P-256" <> context
 
@@ -75,7 +75,7 @@ defmodule WebPushElixir do
     %{ciphertext: cipher_text <> cipher_tag, salt: salt}
   end
 
-  defp get_signed_json_web_token(endpoint, server_public_key, server_private_key) do
+  defp get_signed_json_web_token(endpoint, vapid_public_key, vapid_private_key) do
     json_web_token =
       JOSE.JWT.from_map(%{
         aud: URI.parse(endpoint).scheme <> "://" <> URI.parse(endpoint).host,
@@ -85,8 +85,8 @@ defmodule WebPushElixir do
 
     json_web_key =
       JOSE.JWK.from_key(
-        {:ECPrivateKey, 1, server_private_key, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
-          server_public_key, nil}
+        {:ECPrivateKey, 1, vapid_private_key, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
+          vapid_public_key, nil}
       )
 
     {%{alg: :jose_jws_alg_ecdsa}, signed_json_web_token} =
@@ -96,36 +96,36 @@ defmodule WebPushElixir do
   end
 
   def gen_key_pair() do
-    {public, private} = :crypto.generate_key(:ecdh, :prime256v1)
+    {public_key, private_key} = :crypto.generate_key(:ecdh, :prime256v1)
 
-    {url_encode(public), url_encode(private)}
+    {url_encode(public_key), url_encode(private_key)}
   end
 
-  def output_key_pair({public, private}) do
+  def output_key_pair({public_key, private_key}) do
     fn ->
-      Logger.info(%{:public_key => public})
-      Logger.info(%{:private_key => private})
+      Logger.info(%{:vapid_public_key => public_key})
+      Logger.info(%{:vapid_private_key => private_key})
 
-      Logger.info(%{:subject => "mailto:admin@email.com"})
+      Logger.info(%{:vapid_subject => "mailto:admin@email.com"})
     end
   end
 
   def send_notification(subscription, message) do
-    server_public_key = url_decode(System.get_env("VAPID_PUBLIC_KEY"))
-    server_private_key = url_decode(System.get_env("VAPID_PRIVATE_KEY"))
+    vapid_public_key = url_decode(System.get_env("VAPID_PUBLIC_KEY"))
+    vapid_private_key = url_decode(System.get_env("VAPID_PRIVATE_KEY"))
 
     %{endpoint: endpoint, keys: %{auth: auth, p256dh: p256dh}} =
       Jason.decode!(subscription, keys: :atoms)
 
-    encrypted = encrypt(message, auth, p256dh, server_public_key, server_private_key)
+    encrypted = encrypt(message, auth, p256dh, vapid_public_key, vapid_private_key)
 
     signed_json_web_token =
-      get_signed_json_web_token(endpoint, server_public_key, server_private_key)
+      get_signed_json_web_token(endpoint, vapid_public_key, vapid_private_key)
 
     HTTPoison.post(endpoint, encrypted.ciphertext, %{
       "Authorization" => "WebPush #{signed_json_web_token}",
       "Content-Encoding" => "aesgcm",
-      "Crypto-Key" => "dh=#{url_encode(server_public_key)};",
+      "Crypto-Key" => "dh=#{url_encode(vapid_public_key)};",
       "Encryption" => "salt=#{url_encode(encrypted.salt)}",
       "TTL" => "0"
     })

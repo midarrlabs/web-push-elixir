@@ -7,24 +7,24 @@ defmodule WebPushElixirTest do
 
   test "it should output key pair" do
     assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
-             "public_key:"
+             "vapid_public_key:"
 
     assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
-             "private_key:"
+             "vapid_private_key:"
 
     assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
-             "subject:"
+             "vapid_subject:"
 
     assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
              "mailto:admin@email.com"
   end
 
   test "it should send notification" do
-    {public, private} = WebPushElixir.gen_key_pair()
+    {vapid_public_key, vapid_private_key} = WebPushElixir.gen_key_pair()
 
-    System.put_env("VAPID_PUBLIC_KEY", public)
+    System.put_env("VAPID_PUBLIC_KEY", vapid_public_key)
 
-    System.put_env("VAPID_PRIVATE_KEY", private)
+    System.put_env("VAPID_PRIVATE_KEY", vapid_private_key)
 
     System.put_env("VAPID_SUBJECT", "mailto:admin@email.com")
 
@@ -33,7 +33,7 @@ defmodule WebPushElixirTest do
     assert [
              {"Authorization", "WebPush " <> <<_jwt::binary>>},
              {"Content-Encoding", "aesgcm"},
-             {"Crypto-Key", "dh=" <> <<_server_public_key::binary>>},
+             {"Crypto-Key", "dh=" <> <<_vapid_public_key::binary>>},
              {"Encryption", "salt=" <> <<_salt::binary>>},
              {"TTL", "0"}
            ] = response.request.headers
