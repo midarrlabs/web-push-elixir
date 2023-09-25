@@ -75,6 +75,26 @@ defmodule WebPushElixir do
     %{ciphertext: cipher_text <> cipher_tag, salt: salt}
   end
 
+  defp get_signed_json_web_token(endpoint, server_public_key, server_private_key) do
+    json_web_token =
+      JOSE.JWT.from_map(%{
+        aud: URI.parse(endpoint).scheme <> "://" <> URI.parse(endpoint).host,
+        exp: DateTime.to_unix(DateTime.utc_now()) + 12 * 3600,
+        sub: System.get_env("VAPID_SUBJECT")
+      })
+
+    json_web_key =
+      JOSE.JWK.from_key(
+        {:ECPrivateKey, 1, server_private_key, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
+          server_public_key, nil}
+      )
+
+    {%{alg: :jose_jws_alg_ecdsa}, signed_json_web_token} =
+      JOSE.JWS.compact(JOSE.JWT.sign(json_web_key, %{"alg" => "ES256"}, json_web_token))
+
+    signed_json_web_token
+  end
+
   def gen_key_pair() do
     {public, private} = :crypto.generate_key(:ecdh, :prime256v1)
 
@@ -88,26 +108,6 @@ defmodule WebPushElixir do
 
       Logger.info(%{:subject => "mailto:admin@email.com"})
     end
-  end
-
-  defp get_signed_json_web_token(endpoint, server_public_key, server_private_key) do
-    json_web_token =
-      JOSE.JWT.from_map(%{
-        aud: URI.parse(endpoint).scheme <> "://" <> URI.parse(endpoint).host,
-        exp: DateTime.to_unix(DateTime.utc_now()) + 12 * 3600,
-        sub: System.get_env("VAPID_SUBJECT")
-      })
-
-    json_web_key =
-      JOSE.JWK.from_key(
-        {:ECPrivateKey, 1, server_private_key, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
-         server_public_key, nil}
-      )
-
-    {%{alg: :jose_jws_alg_ecdsa}, signed_json_web_token} =
-      JOSE.JWS.compact(JOSE.JWT.sign(json_web_key, %{"alg" => "ES256"}, json_web_token))
-
-    signed_json_web_token
   end
 
   def send_notification(subscription, message) do
