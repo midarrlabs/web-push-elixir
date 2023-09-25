@@ -34,11 +34,11 @@ defmodule WebPushElixirTest do
   test "it should send notification" do
     {public, private} = WebPushElixir.gen_key_pair()
 
-    System.put_env("PUBLIC_KEY", public)
+    System.put_env("VAPID_PUBLIC_KEY", public)
 
-    System.put_env("PRIVATE_KEY", private)
+    System.put_env("VAPID_PRIVATE_KEY", private)
 
-    System.put_env("SUBJECT", "mailto:admin@email.com")
+    System.put_env("VAPID_SUBJECT", "mailto:admin@email.com")
 
     {:ok, response} = WebPushElixir.send_notification(@subscription_decoded, "some message")
 

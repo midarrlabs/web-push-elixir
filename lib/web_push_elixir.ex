@@ -9,10 +9,10 @@ defmodule WebPushElixir do
     Base.url_decode64!(string, padding: false)
   end
 
-  defp hmac_based_key_derivation_function(salt, ikm, info, length) do
+  defp hmac_based_key_derivation_function(salt, initial_keying_material, info, length) do
     pseudo_random_key =
       :crypto.mac_init(:hmac, :sha256, salt)
-      |> :crypto.mac_update(ikm)
+      |> :crypto.mac_update(initial_keying_material)
       |> :crypto.mac_final()
 
     :crypto.mac_init(:hmac, :sha256, pseudo_random_key)
@@ -24,7 +24,7 @@ defmodule WebPushElixir do
 
   defp encrypt(
          message,
-         %{keys: %{auth: auth, p256dh: p256dh}} = _subscription,
+         %{keys: %{auth: auth, p256dh: p256dh}},
          server_public_key,
          server_private_key
        ) do
@@ -94,7 +94,7 @@ defmodule WebPushElixir do
       JOSE.JWT.from_map(%{
         aud: URI.parse(endpoint).scheme <> "://" <> URI.parse(endpoint).host,
         exp: DateTime.to_unix(DateTime.utc_now()) + 12 * 3600,
-        sub: System.get_env("SUBJECT")
+        sub: System.get_env("VAPID_SUBJECT")
       })
 
     json_web_key =
@@ -110,8 +110,8 @@ defmodule WebPushElixir do
   end
 
   def send_notification(%{endpoint: endpoint} = subscription, message) do
-    server_public_key = url_decode(System.get_env("PUBLIC_KEY"))
-    server_private_key = url_decode(System.get_env("PRIVATE_KEY"))
+    server_public_key = url_decode(System.get_env("VAPID_PUBLIC_KEY"))
+    server_private_key = url_decode(System.get_env("VAPID_PRIVATE_KEY"))
 
     encrypted = encrypt(message, subscription, server_public_key, server_private_key)
     signed_json_web_token = get_signed_json_web_token(endpoint, server_public_key, server_private_key)
