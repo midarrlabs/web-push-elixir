@@ -1,6 +1,4 @@
 defmodule WebPushElixir do
-  require Logger
-
   defp url_encode(string) do
     Base.url_encode64(string, padding: false)
   end
@@ -75,7 +73,7 @@ defmodule WebPushElixir do
     %{ciphertext: cipher_text <> cipher_tag, salt: salt}
   end
 
-  defp get_signed_json_web_token(endpoint, vapid_public_key, vapid_private_key) do
+  defp sign_json_web_token(endpoint, vapid_public_key, vapid_private_key) do
     json_web_token =
       JOSE.JWT.from_map(%{
         aud: URI.parse(endpoint).scheme <> "://" <> URI.parse(endpoint).host,
@@ -86,28 +84,13 @@ defmodule WebPushElixir do
     json_web_key =
       JOSE.JWK.from_key(
         {:ECPrivateKey, 1, vapid_private_key, {:namedCurve, {1, 2, 840, 10045, 3, 1, 7}},
-          vapid_public_key, nil}
+         vapid_public_key, nil}
       )
 
     {%{alg: :jose_jws_alg_ecdsa}, signed_json_web_token} =
       JOSE.JWS.compact(JOSE.JWT.sign(json_web_key, %{"alg" => "ES256"}, json_web_token))
 
     signed_json_web_token
-  end
-
-  def gen_key_pair() do
-    {public_key, private_key} = :crypto.generate_key(:ecdh, :prime256v1)
-
-    {url_encode(public_key), url_encode(private_key)}
-  end
-
-  def output_key_pair({public_key, private_key}) do
-    fn ->
-      Logger.info(%{:vapid_public_key => public_key})
-      Logger.info(%{:vapid_private_key => private_key})
-
-      Logger.info(%{:vapid_subject => "mailto:admin@email.com"})
-    end
   end
 
   def send_notification(subscription, message) do
@@ -120,7 +103,7 @@ defmodule WebPushElixir do
     encrypted = encrypt(message, auth, p256dh, vapid_public_key, vapid_private_key)
 
     signed_json_web_token =
-      get_signed_json_web_token(endpoint, vapid_public_key, vapid_private_key)
+      sign_json_web_token(endpoint, vapid_public_key, vapid_private_key)
 
     HTTPoison.post(endpoint, encrypted.ciphertext, %{
       "Authorization" => "WebPush #{signed_json_web_token}",

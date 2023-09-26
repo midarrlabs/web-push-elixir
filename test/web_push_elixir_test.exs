@@ -1,32 +1,20 @@
 defmodule WebPushElixirTest do
   use ExUnit.Case
 
-  import ExUnit.CaptureLog
-
   @subscription ~c"{\"endpoint\":\"http://localhost:4040/some-endpoint\",\"keys\":{\"p256dh\":\"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=\",\"auth\":\"FPssNDTKnInHVndSTdbKFw==\"}}"
 
-  test "it should output key pair" do
-    assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
-             "vapid_public_key:"
-
-    assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
-             "vapid_private_key:"
-
-    assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
-             "vapid_subject:"
-
-    assert capture_log(WebPushElixir.output_key_pair(WebPushElixir.gen_key_pair())) =~
-             "mailto:admin@email.com"
-  end
-
   test "it should send notification" do
-    {vapid_public_key, vapid_private_key} = WebPushElixir.gen_key_pair()
+    %{
+      vapid_public_key: vapid_public_key,
+      vapid_private_key: vapid_private_key,
+      vapid_subject: vapid_subject
+    } = Mix.Tasks.Generate.Vapid.Keys.run([])
 
     System.put_env("VAPID_PUBLIC_KEY", vapid_public_key)
 
     System.put_env("VAPID_PRIVATE_KEY", vapid_private_key)
 
-    System.put_env("VAPID_SUBJECT", "mailto:admin@email.com")
+    System.put_env("VAPID_SUBJECT", vapid_subject)
 
     {:ok, response} = WebPushElixir.send_notification(@subscription, "some message")
 
