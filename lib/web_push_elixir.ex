@@ -108,9 +108,9 @@ defmodule WebPushElixir do
     HTTPoison.post(endpoint, encrypted.ciphertext, %{
       "Authorization" => "WebPush #{signed_json_web_token}",
       "Content-Encoding" => "aesgcm",
-      "Crypto-Key" => "dh=#{url_encode(vapid_public_key)};",
+      "Crypto-Key" => "p256ecdsa=#{url_encode(vapid_public_key)}",
       "Encryption" => "salt=#{url_encode(encrypted.salt)}",
-      "TTL" => "0"
+      "TTL" => "60"
     })
   end
 end

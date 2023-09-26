@@ -33,6 +33,12 @@ defmodule WebPushElixir.MockServer do
     |> Plug.Conn.send_file(200, "./lib/web_push_elixir/service-worker.js")
   end
 
+  get "/service-worker.js" do
+    conn
+    |> put_resp_header("content-type", "application/x-javascript")
+    |> Plug.Conn.send_file(200, "./lib/web_push_elixir/service-worker.js")
+  end
+
   get "/favicon.ico" do
     conn
     |> put_resp_header("content-type", "image/x-icon")

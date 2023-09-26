@@ -21,9 +21,9 @@ defmodule WebPushElixirTest do
     assert [
              {"Authorization", "WebPush " <> <<_jwt::binary>>},
              {"Content-Encoding", "aesgcm"},
-             {"Crypto-Key", "dh=" <> <<_vapid_public_key::binary>>},
+             {"Crypto-Key", "p256ecdsa=" <> <<_vapid_public_key::binary>>},
              {"Encryption", "salt=" <> <<_salt::binary>>},
-             {"TTL", "0"}
+             {"TTL", "60"}
            ] = response.request.headers
 
     assert <<_body::binary>> = response.request.body
@@ -34,7 +34,7 @@ defmodule WebPushElixirTest do
 
     assert [
              {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-length", "348"},
+             {"content-length", "611"},
              {"content-type", "text/html; charset=utf-8"},
              {"date", <<_date::binary>>},
              {"server", "Cowboy"}
@@ -58,7 +58,7 @@ defmodule WebPushElixirTest do
 
     assert [
              {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-length", "784"},
+             {"content-length", "903"},
              {"content-type", "application/x-javascript"},
              {"date", <<_date::binary>>},
              {"server", "Cowboy"}
@@ -70,7 +70,7 @@ defmodule WebPushElixirTest do
 
     assert [
              {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-length", "208"},
+             {"content-length", "262"},
              {"content-type", "application/x-javascript"},
              {"date", <<_date::binary>>},
              {"server", "Cowboy"}
