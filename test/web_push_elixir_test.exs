@@ -1,7 +1,7 @@
 defmodule WebPushElixirTest do
   use ExUnit.Case
 
-  @subscription ~c"{\"endpoint\":\"http://localhost:4040/some-endpoint\",\"keys\":{\"p256dh\":\"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=\",\"auth\":\"FPssNDTKnInHVndSTdbKFw==\"}}"
+  @subscription ~c"{\"endpoint\":\"http://localhost:4040/some-push-service\",\"keys\":{\"p256dh\":\"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=\",\"auth\":\"FPssNDTKnInHVndSTdbKFw==\"}}"
 
   test "it should send notification" do
     %{
@@ -21,7 +21,9 @@ defmodule WebPushElixirTest do
     assert [
              {"Authorization", "WebPush " <> <<_jwt::binary>>},
              {"Content-Encoding", "aesgcm"},
-             {"Crypto-Key", "p256ecdsa=" <> <<_vapid_public_key::binary>>},
+             {"Content-Length", <<_content_length::binary>>},
+             {"Content-Type", "application/octet-stream"},
+             {"Crypto-Key", <<_crypto_keys::binary>>},
              {"Encryption", "salt=" <> <<_salt::binary>>},
              {"TTL", "60"}
            ] = response.request.headers
@@ -58,7 +60,7 @@ defmodule WebPushElixirTest do
 
     assert [
              {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-length", "903"},
+             {"content-length", "887"},
              {"content-type", "application/x-javascript"},
              {"date", <<_date::binary>>},
              {"server", "Cowboy"}
@@ -66,6 +68,18 @@ defmodule WebPushElixirTest do
   end
 
   test "it should have service worker headers" do
+    {:ok, response} = HTTPoison.get(~c"http://localhost:4040/service-worker.js")
+
+    assert [
+             {"cache-control", "max-age=0, private, must-revalidate"},
+             {"content-length", "262"},
+             {"content-type", "application/x-javascript"},
+             {"date", <<_date::binary>>},
+             {"server", "Cowboy"}
+           ] = response.headers
+  end
+
+  test "it should have static service worker headers" do
     {:ok, response} = HTTPoison.get(~c"http://localhost:4040/web-push-elixir/service-worker.js")
 
     assert [

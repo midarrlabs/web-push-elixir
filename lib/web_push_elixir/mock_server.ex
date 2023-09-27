@@ -4,7 +4,7 @@ defmodule WebPushElixir.MockServer do
   plug(:match)
   plug(:dispatch)
 
-  post "/some-endpoint" do
+  post "/some-push-service" do
     conn
     |> Plug.Conn.send_resp(200, "ok")
   end
@@ -27,13 +27,13 @@ defmodule WebPushElixir.MockServer do
     |> Plug.Conn.send_file(200, "./lib/web_push_elixir/main.js")
   end
 
-  get "/web-push-elixir/service-worker.js" do
+  get "/service-worker.js" do
     conn
     |> put_resp_header("content-type", "application/x-javascript")
     |> Plug.Conn.send_file(200, "./lib/web_push_elixir/service-worker.js")
   end
 
-  get "/service-worker.js" do
+  get "/web-push-elixir/service-worker.js" do
     conn
     |> put_resp_header("content-type", "application/x-javascript")
     |> Plug.Conn.send_file(200, "./lib/web_push_elixir/service-worker.js")

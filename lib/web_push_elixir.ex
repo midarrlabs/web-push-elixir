@@ -20,19 +20,15 @@ defmodule WebPushElixir do
     |> :binary.part(0, length)
   end
 
-  defp encrypt(
-         message,
-         auth,
-         p256dh,
-         vapid_public_key,
-         vapid_private_key
-       ) do
+  defp encrypt(message, p256dh, auth) do
     client_public_key = url_decode(p256dh)
     client_auth_secret = url_decode(auth)
 
     salt = :crypto.strong_rand_bytes(16)
 
-    shared_secret = :crypto.compute_key(:ecdh, client_public_key, vapid_private_key, :prime256v1)
+    {local_public_key, local_private_key} = :crypto.generate_key(:ecdh, :prime256v1)
+
+    shared_secret = :crypto.compute_key(:ecdh, client_public_key, local_private_key, :prime256v1)
 
     pseudo_random_key =
       hmac_based_key_derivation_function(
@@ -45,7 +41,7 @@ defmodule WebPushElixir do
     context =
       <<0, byte_size(client_public_key)::unsigned-big-integer-size(16)>> <>
         client_public_key <>
-        <<byte_size(vapid_public_key)::unsigned-big-integer-size(16)>> <> vapid_public_key
+        <<byte_size(local_public_key)::unsigned-big-integer-size(16)>> <> local_public_key
 
     content_encryption_key_info = "Content-Encoding: aesgcm" <> <<0>> <> "P-256" <> context
 
@@ -60,17 +56,19 @@ defmodule WebPushElixir do
         12
       )
 
+    padded_message = <<0::unsigned-big-integer-size(16)>> <> :binary.copy(<<0>>, 0) <> message
+
     {cipher_text, cipher_tag} =
       :crypto.crypto_one_time_aead(
         :aes_128_gcm,
         content_encryption_key,
         nonce,
-        message,
-        "",
+        padded_message,
+        <<>>,
         true
       )
 
-    %{ciphertext: cipher_text <> cipher_tag, salt: salt}
+    %{ciphertext: cipher_text <> cipher_tag, salt: salt, local_public_key: local_public_key}
   end
 
   defp sign_json_web_token(endpoint, vapid_public_key, vapid_private_key) do
@@ -100,7 +98,7 @@ defmodule WebPushElixir do
     %{endpoint: endpoint, keys: %{auth: auth, p256dh: p256dh}} =
       Jason.decode!(subscription, keys: :atoms)
 
-    encrypted = encrypt(message, auth, p256dh, vapid_public_key, vapid_private_key)
+    encrypted = encrypt(message, p256dh, auth)
 
     signed_json_web_token =
       sign_json_web_token(endpoint, vapid_public_key, vapid_private_key)
@@ -108,7 +106,10 @@ defmodule WebPushElixir do
     HTTPoison.post(endpoint, encrypted.ciphertext, %{
       "Authorization" => "WebPush #{signed_json_web_token}",
       "Content-Encoding" => "aesgcm",
-      "Crypto-Key" => "p256ecdsa=#{url_encode(vapid_public_key)}",
+      "Content-Length" => "#{byte_size(encrypted.ciphertext)}",
+      "Content-Type" => "application/octet-stream",
+      "Crypto-Key" =>
+        "dh=#{url_encode(encrypted.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}",
       "Encryption" => "salt=#{url_encode(encrypted.salt)}",
       "TTL" => "60"
     })
