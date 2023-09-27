@@ -11,5 +11,6 @@ defmodule Mix.Tasks.Generate.Vapid.Keys do
       vapid_private_key: Base.url_encode64(private_key, padding: false),
       vapid_subject: "mailto:admin@email.com"
     }
+    |> IO.inspect
   end
 end

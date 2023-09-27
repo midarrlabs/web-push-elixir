@@ -20,7 +20,7 @@ defmodule WebPushElixir do
     |> :binary.part(0, length)
   end
 
-  defp encrypt(message, p256dh, auth) do
+  defp encrypt_payload(message, p256dh, auth) do
     client_public_key = url_decode(p256dh)
     client_auth_secret = url_decode(auth)
 
@@ -95,22 +95,22 @@ defmodule WebPushElixir do
     vapid_public_key = url_decode(System.get_env("VAPID_PUBLIC_KEY"))
     vapid_private_key = url_decode(System.get_env("VAPID_PRIVATE_KEY"))
 
-    %{endpoint: endpoint, keys: %{auth: auth, p256dh: p256dh}} =
+    %{endpoint: endpoint, keys: %{p256dh: p256dh, auth: auth}} =
       Jason.decode!(subscription, keys: :atoms)
 
-    encrypted = encrypt(message, p256dh, auth)
+    encrypted_payload = encrypt_payload(message, p256dh, auth)
 
     signed_json_web_token =
       sign_json_web_token(endpoint, vapid_public_key, vapid_private_key)
 
-    HTTPoison.post(endpoint, encrypted.ciphertext, %{
+    HTTPoison.post(endpoint, encrypted_payload.ciphertext, %{
       "Authorization" => "WebPush #{signed_json_web_token}",
       "Content-Encoding" => "aesgcm",
-      "Content-Length" => "#{byte_size(encrypted.ciphertext)}",
+      "Content-Length" => "#{byte_size(encrypted_payload.ciphertext)}",
       "Content-Type" => "application/octet-stream",
       "Crypto-Key" =>
-        "dh=#{url_encode(encrypted.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}",
-      "Encryption" => "salt=#{url_encode(encrypted.salt)}",
+        "dh=#{url_encode(encrypted_payload.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}",
+      "Encryption" => "salt=#{url_encode(encrypted_payload.salt)}",
       "TTL" => "60"
     })
   end
