@@ -21,7 +21,7 @@ defmodule WebPushElixirTest do
     assert [
              {"Authorization", "WebPush " <> <<_jwt::binary>>},
              {"Content-Encoding", "aesgcm"},
-             {"Content-Length", <<_content_length::binary>>},
+             {"Content-Length", "30"},
              {"Content-Type", "application/octet-stream"},
              {"Crypto-Key", <<_crypto_keys::binary>>},
              {"Encryption", "salt=" <> <<_salt::binary>>},
