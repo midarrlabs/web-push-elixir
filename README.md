@@ -1,13 +1,13 @@
 # Web Push Elixir
 
+Simple web push library for Elixir.
+
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/midarrlabs/web-push-elixir/test.yml)
 [![codecov](https://codecov.io/gh/midarrlabs/web-push-elixir/graph/badge.svg?token=Y9FG6IFTIN)](https://codecov.io/gh/midarrlabs/web-push-elixir)
 
-Simple web push for Elixir
-
 ## Installation
 
-1. The package can be installed by adding `web_push_elixir` to your list of dependencies in `mix.exs`:
+1. Add `web_push_elixir` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -17,7 +17,7 @@ def deps do
 end
 ```
 
-2. Run the mix command to generate your Vapid public and private keys:
+2. Run mix command to generate your Vapid public and private keys:
 
 ```commandline
 mix generate.vapid.keys
@@ -31,6 +31,23 @@ environment:
   - VAPID_PRIVATE_KEY=someVapidPrivateKey
   - VAPID_SUBJECT=mailto:admin@email.com
 ```
+
+## Usage
+
+`WebPushElixir` provides a simple public API `send_notification/2` that accepts 2 arguments:
+
+* `subscription`: is the subscription information received from the client.
+* `message`: your message string.
+
+```elixir
+subscription = '{"endpoint":"http://localhost:4040/some-push-service","keys":{"p256dh":"BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=","auth":"tBHItJI5svbpez7KI4CCXg=="}}'
+message = "Some message"
+
+WebPushElixir.send_notification(subscription, message)
+```
+
+For more information on how to subscribe a client, permission UX and more - have a look at [https://web.dev/notifications/](https://web.dev/notifications/)
+
 
 ## Credits
 
