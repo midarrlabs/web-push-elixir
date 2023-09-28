@@ -1,7 +1,7 @@
 defmodule WebPushElixirTest do
   use ExUnit.Case
 
-  @subscription ~c"{\"endpoint\":\"http://localhost:4040/some-push-service\",\"keys\":{\"p256dh\":\"BIPUL12DLfytvTajnryr2PRdAgXS3HGKiLqndGcJGabyhHheJYlNGCeXl1dn18gSJ1WAkAPIxr4gK0_dQds4yiI=\",\"auth\":\"FPssNDTKnInHVndSTdbKFw==\"}}"
+  @subscription '{"endpoint":"http://localhost:4040/some-push-service","keys":{"p256dh":"BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=","auth":"tBHItJI5svbpez7KI4CCXg=="}}'
 
   test "it should send notification" do
     %{
@@ -60,7 +60,7 @@ defmodule WebPushElixirTest do
 
     assert [
              {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-length", "887"},
+             {"content-length", "916"},
              {"content-type", "application/x-javascript"},
              {"date", <<_date::binary>>},
              {"server", "Cowboy"}
