@@ -7,7 +7,7 @@ Simple web push for Elixir
 
 ## Installation
 
-The package can be installed by adding `web_push_elixir` to your list of dependencies in `mix.exs`:
+1. The package can be installed by adding `web_push_elixir` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -16,3 +16,22 @@ def deps do
   ]
 end
 ```
+
+2. Run the mix command to generate your Vapid public and private keys:
+
+```commandline
+mix generate.vapid.keys
+```
+
+3. Set your environment variables for your keys:
+
+```yaml
+environment:
+  - VAPID_PUBLIC_KEY=someVapidPublicKey
+  - VAPID_PRIVATE_KEY=someVapidPrivateKey
+  - VAPID_SUBJECT=mailto:admin@email.com
+```
+
+## Credits
+
+Heavily inspired by [@danhper](https://github.com/danhper) as his work on [elixir-web-push-encryption](https://github.com/danhper/elixir-web-push-encryption) :pray: Thank you
