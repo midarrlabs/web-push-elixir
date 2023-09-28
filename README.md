@@ -1,8 +1,8 @@
 
 # Web Push Elixir
-<p>
-    <em>Simple web push library for Elixir</em>
-</p>
+
+Simple web push library for Elixir
+
 <a href="https://github.com/midarrlabs/web-push-elixir/actions/workflows/test.yml">
     <img src="https://github.com/midarrlabs/web-push-elixir/actions/workflows/test.yml/badge.svg" alt="Test Status">
 </a>
@@ -63,6 +63,16 @@ WebPushElixir.send_notification(subscription, message)
 ```
 
 For more information on how to subscribe a client, permission UX and more - have a look at [https://web.dev/notifications/](https://web.dev/notifications/)
+
+## Run tests
+
+```commandline
+mix test
+```
+
+## License
+
+WebPushElixir is open-sourced software licensed under the [MIT license](LICENSE).
 
 
 ## Credits
