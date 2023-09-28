@@ -1,15 +1,21 @@
-# Web Push Elixir
-
-Simple web push library for Elixir.
-
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/midarrlabs/web-push-elixir/test.yml)
-[![codecov](https://codecov.io/gh/midarrlabs/web-push-elixir/graph/badge.svg?token=Y9FG6IFTIN)](https://codecov.io/gh/midarrlabs/web-push-elixir)
-<a href="https://hex.pm/packages/web_push_elixir">
-<img alt="Hex Version" src="https://img.shields.io/hexpm/v/web_push_elixir.svg">
-</a>
-<a href="https://hexdocs.pm/web_push_elixir">
-<img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
-</a>
+<div align="center">
+    <h1>Web Push Elixir</h1>
+    <p>
+        <em>Simple web push library for Elixir</em>
+    </p>
+    <a href="https://github.com/midarrlabs/web-push-elixir/actions/workflows/test.yml">
+        <img src="https://github.com/midarrlabs/web-push-elixir/actions/workflows/test.yml/badge.svg" alt="Test Status">
+    </a>
+    <a href="https://codecov.io/gh/midarrlabs/web-push-elixir">
+        <img src="https://codecov.io/gh/midarrlabs/web-push-elixir/branch/main/graph/badge.svg?token=8PJVJG09RK&style=flat-square" alt="Code Coverage">
+    </a>
+    <a href="https://hex.pm/packages/web_push_elixir">
+        <img alt="Hex Version" src="https://img.shields.io/hexpm/v/web_push_elixir.svg">
+    </a>
+    <a href="https://hexdocs.pm/web_push_elixir">
+        <img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
+    </a>
+</div>
 
 ## Prerequisities
 
