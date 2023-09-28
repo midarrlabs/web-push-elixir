@@ -1,5 +1,5 @@
 <div align="center">
-    <h1>Web Push Elixir</h1>
+    <h3>Web Push Elixir</h3>
     <p>
         <em>Simple web push library for Elixir</em>
     </p>
