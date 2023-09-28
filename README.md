@@ -4,6 +4,12 @@ Simple web push library for Elixir.
 
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/midarrlabs/web-push-elixir/test.yml)
 [![codecov](https://codecov.io/gh/midarrlabs/web-push-elixir/graph/badge.svg?token=Y9FG6IFTIN)](https://codecov.io/gh/midarrlabs/web-push-elixir)
+<a href="https://hex.pm/packages/web_push_elixir">
+<img alt="Hex Version" src="https://img.shields.io/hexpm/v/web_push_elixir.svg">
+</a>
+<a href="https://hexdocs.pm/web_push_elixir">
+<img alt="Hex Docs" src="http://img.shields.io/badge/hex.pm-docs-green.svg?style=flat">
+</a>
 
 ## Prerequisities
 
