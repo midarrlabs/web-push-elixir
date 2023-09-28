@@ -1,4 +1,8 @@
 defmodule WebPushElixir do
+  @moduledoc """
+  Module to send web push notifications with an encrypted payload.
+  """
+
   defp url_encode(string) do
     Base.url_encode64(string, padding: false)
   end
@@ -91,6 +95,18 @@ defmodule WebPushElixir do
     signed_json_web_token
   end
 
+  @doc """
+  Sends a web push notification with an encrypted payload.
+
+  ## Arguments
+
+  * `subscription` is the subscription information received from the client. Accepted example: `'{"endpoint":"http://localhost:4040/some-push-service","keys":{"p256dh":"BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=","auth":"tBHItJI5svbpez7KI4CCXg=="}}'`
+  * `message` is a string payload.
+
+  ## Return value
+
+  Returns the result of `HTTPoison.post`
+  """
   def send_notification(subscription, message) do
     vapid_public_key = url_decode(System.get_env("VAPID_PUBLIC_KEY"))
     vapid_private_key = url_decode(System.get_env("VAPID_PRIVATE_KEY"))
