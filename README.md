@@ -17,11 +17,11 @@
     </a>
 </div>
 
-## Prerequisities
+### Prerequisities
 
 * Elixir 1.15, OTP 24 / 25 / 26
 
-## Installation
+### Installation
 
 1. Add `web_push_elixir` to your list of dependencies in `mix.exs`:
 
@@ -48,7 +48,7 @@ environment:
   - VAPID_SUBJECT=mailto:admin@email.com
 ```
 
-## Usage
+### Usage
 
 `WebPushElixir` provides a simple public API `send_notification/2` that accepts 2 arguments:
 
@@ -65,6 +65,6 @@ WebPushElixir.send_notification(subscription, message)
 For more information on how to subscribe a client, permission UX and more - have a look at [https://web.dev/notifications/](https://web.dev/notifications/)
 
 
-## Credits
+### Credits
 
 Heavily inspired by [elixir-web-push-encryption](https://github.com/danhper/elixir-web-push-encryption)
