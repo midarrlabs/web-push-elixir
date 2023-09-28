@@ -5,6 +5,10 @@ Simple web push library for Elixir.
 ![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/midarrlabs/web-push-elixir/test.yml)
 [![codecov](https://codecov.io/gh/midarrlabs/web-push-elixir/graph/badge.svg?token=Y9FG6IFTIN)](https://codecov.io/gh/midarrlabs/web-push-elixir)
 
+## Prerequisities
+
+* Elixir 1.15, OTP 24 / 25 / 26
+
 ## Installation
 
 1. Add `web_push_elixir` to your list of dependencies in `mix.exs`:
