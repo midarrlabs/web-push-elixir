@@ -72,7 +72,7 @@ mix test
 
 ## License
 
-WebPushElixir is open-sourced software licensed under the [MIT license](LICENSE).
+Web Push Elixir is open-sourced software licensed under the [MIT license](LICENSE).
 
 
 ## Credits
