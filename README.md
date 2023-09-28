@@ -34,4 +34,4 @@ environment:
 
 ## Credits
 
-Heavily inspired by [@danhper](https://github.com/danhper) as his work on [elixir-web-push-encryption](https://github.com/danhper/elixir-web-push-encryption) :pray: Thank you
+Heavily inspired by [elixir-web-push-encryption](https://github.com/danhper/elixir-web-push-encryption)
