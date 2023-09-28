@@ -100,8 +100,8 @@ defmodule WebPushElixir do
 
   ## Arguments
 
-  * `subscription` is the subscription information received from the client. Accepted example: `'{"endpoint":"http://localhost:4040/some-push-service","keys":{"p256dh":"BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=","auth":"tBHItJI5svbpez7KI4CCXg=="}}'`
-  * `message` is a string payload.
+  * `subscription` is the subscription information received from the client. Accepted example: `'{"endpoint":"https://some-push-service","keys":{"p256dh":"BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=","auth":"tBHItJI5svbpez7KI4CCXg=="}}'`
+  * `message` is a message string.
 
   ## Return value
 
