@@ -52,7 +52,7 @@ environment:
 
 `WebPushElixir` provides a simple `send_notification/2` function that accepts 2 arguments:
 
-* `subscription`: the subscription information received from the client ([example](https://midarrlabs.github.io/web-push-elixir/))
+* `subscription`: the subscription information received from the client - [example demo](https://midarrlabs.github.io/web-push-elixir/)
 * `message`: the message string.
 
 ```elixir
