@@ -19,7 +19,8 @@ Simple web push library for Elixir
 
 ## Prerequisities
 
-* Elixir 1.15, OTP 24 / 25 / 26
+* Elixir 1.15
+* OTP 24 / 25 / 26
 
 ## Installation
 
