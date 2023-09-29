@@ -36,7 +36,7 @@ defmodule WebPushElixirTest do
 
     assert [
              {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-length", "611"},
+             {"content-length", "1578"},
              {"content-type", "text/html; charset=utf-8"},
              {"date", <<_date::binary>>},
              {"server", "Cowboy"}
@@ -60,7 +60,7 @@ defmodule WebPushElixirTest do
 
     assert [
              {"cache-control", "max-age=0, private, must-revalidate"},
-             {"content-length", "916"},
+             {"content-length", "1911"},
              {"content-type", "application/x-javascript"},
              {"date", <<_date::binary>>},
              {"server", "Cowboy"}
