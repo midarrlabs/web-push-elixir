@@ -10,11 +10,11 @@ defmodule WebPushElixirTest do
       vapid_subject: vapid_subject
     } = Mix.Tasks.Generate.Vapid.Keys.run([])
 
-    System.put_env("VAPID_PUBLIC_KEY", vapid_public_key)
+    Application.put_env(:web_push_elixir, :vapid_public_key, vapid_public_key)
 
-    System.put_env("VAPID_PRIVATE_KEY", vapid_private_key)
+    Application.put_env(:web_push_elixir, :vapid_private_key, vapid_private_key)
 
-    System.put_env("VAPID_SUBJECT", vapid_subject)
+    Application.put_env(:web_push_elixir, :vapid_subject, vapid_subject)
 
     {:ok, response} = WebPushElixir.send_notification(@subscription, "some message")
 

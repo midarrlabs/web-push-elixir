@@ -80,7 +80,7 @@ defmodule WebPushElixir do
       JOSE.JWT.from_map(%{
         aud: URI.parse(endpoint).scheme <> "://" <> URI.parse(endpoint).host,
         exp: DateTime.to_unix(DateTime.utc_now()) + 12 * 3600,
-        sub: System.get_env("VAPID_SUBJECT")
+        sub: Application.get_env(:web_push_elixir, :vapid_subject)
       })
 
     json_web_key =
@@ -108,8 +108,8 @@ defmodule WebPushElixir do
   Returns the result of `HTTPoison.post`
   """
   def send_notification(subscription, message) do
-    vapid_public_key = url_decode(System.get_env("VAPID_PUBLIC_KEY"))
-    vapid_private_key = url_decode(System.get_env("VAPID_PRIVATE_KEY"))
+    vapid_public_key = url_decode(Application.get_env(:web_push_elixir, :vapid_public_key))
+    vapid_private_key = url_decode(Application.get_env(:web_push_elixir, :vapid_private_key))
 
     %{endpoint: endpoint, keys: %{p256dh: p256dh, auth: auth}} =
       Jason.decode!(subscription, keys: :atoms)
