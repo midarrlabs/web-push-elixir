@@ -40,18 +40,18 @@ end
 mix generate.vapid.keys
 ```
 
-3. Set environment variables for your generated keys:
+3. Set config for your generated keys:
 
-```yaml
-environment:
-  - VAPID_PUBLIC_KEY=someVapidPublicKey
-  - VAPID_PRIVATE_KEY=someVapidPrivateKey
-  - VAPID_SUBJECT=mailto:admin@email.com
+```elixir
+config :web_push_elixir,
+  vapid_public_key: "someVapidPublicKey",
+  vapid_private_key: "someVapidPrivateKey",
+  vapid_subject: "mailto:admin@email.com"
 ```
 
 ## Usage
 
-`WebPushElixir` provides a simple `send_notification/2` function that accepts 2 arguments:
+`WebPushElixir` provides a simple `send_notification/2` that takes 2 arguments:
 
 * `subscription`: the subscription information received from the client - [example demo](https://midarrlabs.github.io/web-push-elixir/)
 * `message`: the message string.
