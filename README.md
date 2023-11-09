@@ -29,7 +29,7 @@ Simple web push library for Elixir
 ```elixir
 def deps do
   [
-    {:web_push_elixir, "~> 0.2.0"}
+    {:web_push_elixir, "~> 0.4.0"}
   ]
 end
 ```
