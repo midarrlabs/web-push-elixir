@@ -6,6 +6,7 @@ defmodule WebPushElixir.MixProject do
       app: :web_push_elixir,
       version: "0.4.0",
       elixir: "~> 1.15",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: "Simple web push for Elixir",
@@ -25,16 +26,20 @@ defmodule WebPushElixir.MixProject do
     ]
   end
 
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, "~> 0.27", only: :dev, runtime: false},
-      {:excoveralls, "~> 0.10", only: :test},
       {:jose, "~> 1.11"},
       {:jason, "~> 1.4"},
-      {:plug, "~> 1.14"},
-      {:plug_cowboy, "~> 2.0"},
-      {:httpoison, "~> 2.0"}
+      {:httpoison, "~> 2.0"},
+      {:ex_doc, "~> 0.27", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.10", only: :test},
+      {:plug, "~> 1.14", only: :test},
+      {:plug_cowboy, "~> 2.0", only: :test}
     ]
   end
 end
