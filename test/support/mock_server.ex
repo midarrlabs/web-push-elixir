@@ -6,7 +6,17 @@ defmodule WebPushElixir.MockServer do
 
   post "/some-push-service" do
     conn
-    |> Plug.Conn.send_resp(200, "ok")
+    |> Plug.Conn.send_resp(200, "OK")
+  end
+
+  post "/gone" do
+    conn
+    |> Plug.Conn.send_resp(410, "Gone")
+  end
+
+  post "/error" do
+    conn
+    |> Plug.Conn.send_resp(500, "Internal Server Error")
   end
 
   get "/" do

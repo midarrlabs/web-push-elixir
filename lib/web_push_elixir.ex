@@ -100,12 +100,27 @@ defmodule WebPushElixir do
 
   ## Arguments
 
-  * `subscription` the subscription information received from the client. Accepted example: `'{"endpoint":"https://some-push-service","keys":{"p256dh":"BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM=","auth":"tBHItJI5svbpez7KI4CCXg=="}}'`
-  * `message` the message string.
+  * `subscription` - the subscription JSON string received from the client
+  * `message` - the message string to send
 
-  ## Return value
+  ## Examples
 
-  Returns the result of `Req.run` with post request added to response
+      case WebPushElixir.send_notification(subscription, "Hello!") do
+        {:ok, _response} ->
+          :ok
+
+        {:error, :expired} ->
+          Repo.delete(subscription)
+
+        {:error, {:http_error, status, body}} ->
+          Logger.error("HTTP error \#{status}: \#{body}")
+      end
+
+  ## Return Values
+
+  * `{:ok, response}` - notification sent successfully (HTTP 200-202)
+  * `{:error, :expired}` - subscription expired/not found (HTTP 404 or 410)
+  * `{:error, {:http_error, status, body}}` - HTTP error from push service
   """
   def send_notification(subscription, message) do
     vapid_public_key = url_decode(Application.get_env(:web_push_elixir, :vapid_public_key))
@@ -119,7 +134,7 @@ defmodule WebPushElixir do
     signed_json_web_token =
       sign_json_web_token(endpoint, vapid_public_key, vapid_private_key)
 
-    {request, response} = Req.run(
+    case Req.run(
       method: :post,
       url: endpoint,
       body: encrypted_payload.ciphertext,
@@ -132,8 +147,15 @@ defmodule WebPushElixir do
         {"encryption", "salt=#{url_encode(encrypted_payload.salt)}"},
         {"ttl", "60"}
       ]
-    )
+    ) do
+      {request, %{status: status} = response} when status in 200..202 ->
+        {:ok, Map.put(response, :request, request)}
 
-    {:ok, Map.put(response, :request, request)}
+      {_request, %{status: status}} when status in [404, 410] ->
+        {:error, :expired}
+
+      {_request, %{status: status, body: body}} ->
+        {:error, {:http_error, status, body}}
+    end
   end
 end

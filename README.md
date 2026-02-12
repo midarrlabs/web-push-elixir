@@ -65,6 +65,36 @@ WebPushElixir.send_notification(subscription, message)
 
 For more information on how to subscribe a client, permission UX and more - take a look at [https://web.dev/notifications/](https://web.dev/notifications/)
 
+## Error Handling
+
+`WebPushElixir` returns error types to help you handle failures:
+```elixir
+case WebPushElixir.send_notification(subscription, message) do
+  {:ok, _response} ->
+    # Notification sent successfully
+    :ok
+  
+  {:error, :expired} ->
+    # Subscription expired or not found (HTTP 404 / 410)
+    Repo.delete(subscription)
+  
+  {:error, {:http_error, status, body}} ->
+    # Handle specific HTTP errors from the push service
+    Logger.error("Push notification failed: HTTP #{status} - #{body}")
+end
+```
+
+### Common Web Push HTTP Status Codes
+
+- **200-202**: Success
+- **404**: Subscription not found
+- **410**: Subscription expired (user revoked permission)
+- **400**: Bad request (invalid parameters or VAPID headers)
+- **401 / 403**: Authentication error (check VAPID configuration)
+- **413**: Payload too large (max 3kB)
+- **429**: Rate limited (retry later)
+- **500**: Server error (retry later)
+
 ## Run tests
 
 ```commandline
