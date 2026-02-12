@@ -105,7 +105,7 @@ defmodule WebPushElixir do
 
   ## Return value
 
-  Returns the result of `HTTPoison.post`
+  Returns the result of `Req.run` with post request added to response
   """
   def send_notification(subscription, message) do
     vapid_public_key = url_decode(Application.get_env(:web_push_elixir, :vapid_public_key))
@@ -119,15 +119,21 @@ defmodule WebPushElixir do
     signed_json_web_token =
       sign_json_web_token(endpoint, vapid_public_key, vapid_private_key)
 
-    HTTPoison.post(endpoint, encrypted_payload.ciphertext, %{
-      "Authorization" => "WebPush #{signed_json_web_token}",
-      "Content-Encoding" => "aesgcm",
-      "Content-Length" => "#{byte_size(encrypted_payload.ciphertext)}",
-      "Content-Type" => "application/octet-stream",
-      "Crypto-Key" =>
-        "dh=#{url_encode(encrypted_payload.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}",
-      "Encryption" => "salt=#{url_encode(encrypted_payload.salt)}",
-      "TTL" => "60"
-    })
+    {request, response} = Req.run(
+      method: :post,
+      url: endpoint,
+      body: encrypted_payload.ciphertext,
+      headers: [
+        {"authorization", "WebPush #{signed_json_web_token}"},
+        {"content-encoding", "aesgcm"},
+        {"content-length", "#{byte_size(encrypted_payload.ciphertext)}"},
+        {"content-type", "application/octet-stream"},
+        {"crypto-key", "dh=#{url_encode(encrypted_payload.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}"},
+        {"encryption", "salt=#{url_encode(encrypted_payload.salt)}"},
+        {"ttl", "60"}
+      ]
+    )
+
+    {:ok, Map.put(response, :request, request)}
   end
 end
