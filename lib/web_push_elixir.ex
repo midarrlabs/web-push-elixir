@@ -102,6 +102,10 @@ defmodule WebPushElixir do
 
   * `subscription` - the subscription JSON string received from the client
   * `message` - the message string to send
+  * `opts` - Optional message options, currently:
+      * `ttl`: time to live in seconds if the client is disconnected, defaults to 60 seconds
+      * `urgency`: Urgency of the message, one of: `:very-low`, `:low`, `:normal`, `:high`
+      * `topic`: a string with a topic, that is used to replace previous same topic notifications
 
   ## Examples
 
@@ -122,9 +126,13 @@ defmodule WebPushElixir do
   * `{:error, :expired}` - subscription expired/not found (HTTP 404 or 410)
   * `{:error, {:http_error, status, body}}` - HTTP error from push service
   """
-  def send_notification(subscription, message) do
+  def send_notification(subscription, message, opts \\ []) when is_list(opts) do
     vapid_public_key = url_decode(Application.get_env(:web_push_elixir, :vapid_public_key))
     vapid_private_key = url_decode(Application.get_env(:web_push_elixir, :vapid_private_key))
+
+    ttl = Keyword.get(opts, :ttl, 60)
+    urgency = Keyword.get(opts, :urgency, nil)
+    topic = Keyword.get(opts, :topic, nil)
 
     %{"endpoint" => endpoint, "keys" => %{"p256dh" => p256dh, "auth" => auth}} =
       Jason.decode!(subscription)
@@ -134,19 +142,24 @@ defmodule WebPushElixir do
     signed_json_web_token =
       sign_json_web_token(endpoint, vapid_public_key, vapid_private_key)
 
+    headers = [
+      {"authorization", "WebPush #{signed_json_web_token}"},
+      {"content-encoding", "aesgcm"},
+      {"content-length", "#{byte_size(encrypted_payload.ciphertext)}"},
+      {"content-type", "application/octet-stream"},
+      {"crypto-key", "dh=#{url_encode(encrypted_payload.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}"},
+      {"encryption", "salt=#{url_encode(encrypted_payload.salt)}"},
+      {"ttl", "#{ttl}"}
+    ]
+
+    headers = if urgency, do: [{"urgency", Atom.to_string(urgency)} | headers], else: headers
+    headers = if topic, do: [{"topic", topic} | headers], else: headers
+
     case Req.run(
       method: :post,
       url: endpoint,
       body: encrypted_payload.ciphertext,
-      headers: [
-        {"authorization", "WebPush #{signed_json_web_token}"},
-        {"content-encoding", "aesgcm"},
-        {"content-length", "#{byte_size(encrypted_payload.ciphertext)}"},
-        {"content-type", "application/octet-stream"},
-        {"crypto-key", "dh=#{url_encode(encrypted_payload.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}"},
-        {"encryption", "salt=#{url_encode(encrypted_payload.salt)}"},
-        {"ttl", "60"}
-      ]
+      headers: headers
     ) do
       {request, %{status: status} = response} when status in 200..202 ->
         {:ok, Map.put(response, :request, request)}
