@@ -4,7 +4,7 @@ defmodule WebPushElixir.MixProject do
   def project do
     [
       app: :web_push_elixir,
-      version: "v0.7.0",
+      version: "0.8.0",
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
