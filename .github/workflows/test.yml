@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '**'
+
+env:
+  MIX_ENV: test
+
+jobs:
+
+  test:
+    name: OTP ${{matrix.otp}} / Elixir ${{matrix.elixir}}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: [ '28', '27', '26' ]
+        elixir: [ '1.18' ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - run: mix deps.get
+      - run: mix test
+      - run: mix coveralls.json
+      - uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
