@@ -147,7 +147,8 @@ defmodule WebPushElixir do
       {"content-encoding", "aesgcm"},
       {"content-length", "#{byte_size(encrypted_payload.ciphertext)}"},
       {"content-type", "application/octet-stream"},
-      {"crypto-key", "dh=#{url_encode(encrypted_payload.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}"},
+      {"crypto-key",
+       "dh=#{url_encode(encrypted_payload.local_public_key)};p256ecdsa=#{url_encode(vapid_public_key)}"},
       {"encryption", "salt=#{url_encode(encrypted_payload.salt)}"},
       {"ttl", "#{ttl}"}
     ]
@@ -156,11 +157,11 @@ defmodule WebPushElixir do
     headers = if topic, do: [{"topic", topic} | headers], else: headers
 
     case Req.run(
-      method: :post,
-      url: endpoint,
-      body: encrypted_payload.ciphertext,
-      headers: headers
-    ) do
+           method: :post,
+           url: endpoint,
+           body: encrypted_payload.ciphertext,
+           headers: headers
+         ) do
       {request, %{status: status} = response} when status in 200..202 ->
         {:ok, Map.put(response, :request, request)}
 
