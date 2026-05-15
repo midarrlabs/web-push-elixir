@@ -125,6 +125,7 @@ defmodule WebPushElixir do
   * `{:ok, response}` - notification sent successfully (HTTP 200-202)
   * `{:error, :expired}` - subscription expired/not found (HTTP 404 or 410)
   * `{:error, {:http_error, status, body}}` - HTTP error from push service
+  * `{:error, {:transport_error, reason}}` - transport error from Req
   """
   def send_notification(subscription, message, opts \\ []) when is_list(opts) do
     vapid_public_key = url_decode(Application.get_env(:web_push_elixir, :vapid_public_key))
@@ -169,6 +170,9 @@ defmodule WebPushElixir do
 
       {_request, %{status: status, body: body}} ->
         {:error, {:http_error, status, body}}
+
+      {_request, %Req.TransportError{reason: reason}} ->
+        {:error, {:transport_error, reason}}
     end
   end
 end

@@ -64,4 +64,11 @@ defmodule WebPushElixirTest do
     assert {:error, {:http_error, status, _body}} = WebPushElixir.send_notification(error_subscription, "message")
     assert status != 200..202
   end
+
+  test "it should return transport error" do
+    transport_error_subscription = Jason.encode!(%{@test_subscription | "endpoint" => "http://localhost:4041/some-push-service"})
+
+    assert {:error, {:transport_error, _reason}} =
+             WebPushElixir.send_notification(transport_error_subscription, "message")
+  end
 end
